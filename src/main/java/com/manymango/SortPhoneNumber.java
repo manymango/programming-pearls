@@ -18,6 +18,14 @@ public class SortPhoneNumber {
 
 
     /**
+     * 利用归并排序
+     */
+    public static void mergeSort() {
+
+    }
+
+
+    /**
      * 创建10^7个电话号码，并将其顺序打乱写到文件
      */
     public static void createThePhoneNumberTooFile()  {
@@ -63,9 +71,15 @@ public class SortPhoneNumber {
         String resourcePath =directory.getAbsolutePath();
         resourcePath += "\\src\\main\\resources";
 
+        //创建phoneNumberSort文件夹
+        resourcePath += "\\phoneNumberSort";
+        File phoneNumSaveFile = new File(resourcePath);
+        if (!phoneNumSaveFile.exists()) {
+            phoneNumSaveFile.mkdir();
+        }
         // 将电话号码写入文件
         resourcePath += "\\phoneNumber.txt";
-        File phoneNumSaveFile = new File(resourcePath);
+        phoneNumSaveFile = new File(resourcePath);
         Writer out;
         try {
             out = new FileWriter(phoneNumSaveFile);

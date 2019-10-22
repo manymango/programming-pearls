@@ -26,4 +26,4 @@ Thumbs.db
 *.ear
 /target
 
-/src/main/resources/*.txt
+/src/main/resources/*/*.txt
