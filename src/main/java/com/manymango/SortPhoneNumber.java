@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -12,17 +13,16 @@ import java.util.Random;
  * 给手机号排序问题
  */
 public class SortPhoneNumber {
+
+    /** 由于内存有限，内存只能容纳250000个电话号码 */
+    private static final int BATCH_READ_NUMBER_MAX_SIZE = 250000;
+
     public static void main(String[] args) {
-        createThePhoneNumberTooFile();
+        mergeSortTest();
     }
 
 
-    /**
-     * 利用归并排序
-     */
-    public static void mergeSort() {
 
-    }
 
 
     /**
@@ -104,6 +104,63 @@ public class SortPhoneNumber {
         }
 
         System.out.println("create the phone number success, its "+resourcePath);
+    }
+
+
+
+
+    /**
+     * 普通的归并排序测试，写这个只是为了回顾归并排序，
+     * 为基于磁盘归并排序打下基础，嘻嘻
+     */
+    public static void mergeSortTest() {
+        int[] array = {5,4,3,2,1,6,7,8,9};
+        mergeSort(array, 0, array.length-1);
+        System.out.println(Arrays.toString(array));
+    }
+
+    public static void mergeSort(int[] array, int start, int end) {
+        if (start>=end) {
+            return;
+        }
+        int middle = (start+end)/2;
+        // 左边分治
+        mergeSort(array, start, middle);
+        // 右边分治
+        mergeSort(array, middle+1, end);
+        // 合并左右
+        merge(array, start, end, middle);
+    }
+
+    public static void merge(int[] array, int start, int end, int middle) {
+        int leftIndex = start;
+        int rightIndex = middle+1;
+
+        int[] temp = new int[end - start + 1];
+        int i =0;
+        while (leftIndex <= middle && rightIndex <= end) {
+            int left = array[leftIndex];
+            int right = array[rightIndex];
+            if (left <= right) {
+                temp[i++] = left;
+                leftIndex++;
+            } else {
+                temp[i++] = right;
+                rightIndex++;
+            }
+        }
+
+        while (leftIndex <= middle) {
+            temp[i++] = array[leftIndex++];
+        }
+
+        while (rightIndex <= end) {
+            temp[i++] = array[rightIndex++];
+        }
+
+        for (i = 0; i< temp.length;i++) {
+            array[start+i] = temp[i];
+        }
     }
 
 }
