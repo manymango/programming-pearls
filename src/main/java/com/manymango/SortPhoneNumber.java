@@ -1,9 +1,6 @@
 package com.manymango;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -18,7 +15,63 @@ public class SortPhoneNumber {
     private static final int BATCH_READ_NUMBER_MAX_SIZE = 250000;
 
     public static void main(String[] args) {
-        mergeSortTest();
+        String path = getResourcesAbsolutelyPath();
+        path += "\\phoneNumberSort\\phoneNumber.txt";
+        File file = new File(path);
+        int[] array = readAppointLines(file, 1, 1);
+        System.out.println(Arrays.toString(array));
+    }
+
+    /**
+     * 读取文件的指定行
+     * @param file      待读取文件
+     * @param start     开始读取的行下标，第一行的下标为0
+     * @param size      读取的条数
+     * @return          读取的整数数组
+     */
+    public static int[] readAppointLines(File file, int start, int size) {
+        int end = start + size;
+        if (start<0 || start>=end) {
+            return new int[0];
+        }
+        int[] result = new int[size];
+        int[] finalResult = new int[0];
+        try {
+            FileReader in = new FileReader(file);
+            LineNumberReader reader = new LineNumberReader(in);
+            int resultIndex = 0;
+            int readerIndex = 0;
+            String numberStr;
+            while (null != (numberStr = reader.readLine())) {
+                if (readerIndex < start) {
+                    readerIndex++;
+                    continue;
+                }
+                if (readerIndex >= end) {
+                    readerIndex++;
+                    break;
+                }
+                readerIndex++;
+                result[resultIndex++] = Integer.parseInt(numberStr);
+
+            }
+            reader.close();
+            in.close();
+
+            // 如果result数据全部填满则直接返回
+            if (resultIndex >= result.length) {
+                return result;
+            }
+            // 否则只取result前面有赋值的那部分数组
+            finalResult = new int[resultIndex];
+            for (int i=0; i<resultIndex; ++i) {
+                finalResult[i] = result[i];
+            }
+            return finalResult;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return finalResult;
     }
 
 
@@ -66,10 +119,7 @@ public class SortPhoneNumber {
             phoneArray[i] = phoneArray[randomPosition];
             phoneArray[randomPosition] = middlePhNum;
         }
-        // 得到resource文件夹绝对路径
-        File directory = new File("");
-        String resourcePath =directory.getAbsolutePath();
-        resourcePath += "\\src\\main\\resources";
+        String resourcePath = getResourcesAbsolutelyPath();
 
         //创建phoneNumberSort文件夹
         resourcePath += "\\phoneNumberSort";
@@ -104,6 +154,18 @@ public class SortPhoneNumber {
         }
 
         System.out.println("create the phone number success, its "+resourcePath);
+    }
+
+    /**
+     * 得到项目中resources文件夹的绝对路径
+     * @return    resources的绝对路径
+     */
+    public static String getResourcesAbsolutelyPath() {
+        // 得到resource文件夹绝对路径
+        File directory = new File("");
+        String resourcePath =directory.getAbsolutePath();
+        resourcePath += "\\src\\main\\resources";
+        return resourcePath;
     }
 
 
