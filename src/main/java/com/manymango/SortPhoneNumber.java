@@ -1,7 +1,10 @@
 package com.manymango;
 
 import java.io.*;
+import java.sql.BatchUpdateException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -15,12 +18,178 @@ public class SortPhoneNumber {
     private static final int BATCH_READ_NUMBER_MAX_SIZE = 250000;
 
     public static void main(String[] args) {
-        String path = getResourcesAbsolutelyPath();
-        path += "\\phoneNumberSort\\phoneNumber.txt";
-        File file = new File(path);
-        int[] array = readAppointLines(file, 1, 1);
-        System.out.println(Arrays.toString(array));
+        fileMergeSort();
     }
+
+
+    /**
+     * 利用多次归并的方法，对10^7个电话号码进行归并排序
+     */
+    public static void fileMergeSort() {
+        String path = getResourcesAbsolutelyPath();
+        path += "\\phoneNumberSort";
+        File originalFile = new File(path + "\\phoneNumber.txt");
+        int start = 0;
+        int total = 10000000;
+        int index = 0;
+        while (start < total) {
+            int[] phoneNumbers = readAppointLines(originalFile, start, BATCH_READ_NUMBER_MAX_SIZE);
+
+
+            List<Integer> list = new ArrayList<>(BATCH_READ_NUMBER_MAX_SIZE);
+            for (int number : phoneNumbers) {
+                list.add(number);
+            }
+            list.sort(Integer::compareTo);
+            phoneNumbers = new int[BATCH_READ_NUMBER_MAX_SIZE];
+            int i = 0;
+            for (int number : list) {
+                phoneNumbers[i++] = number;
+            }
+
+
+            // mergeSort(phoneNumbers, 0, phoneNumbers.length-1);
+            File tempFile = new File(path + "\\phoneNumber_sort_round1_" + index + ".txt");
+            writePhoneNumbersTooFile(phoneNumbers, tempFile);
+            start += BATCH_READ_NUMBER_MAX_SIZE;
+            index++;
+        }
+
+        // 进行归并排序时，需要对两个有序文件进行排序，则每个文件只能读取最大条数的半数
+        int halfMax = BATCH_READ_NUMBER_MAX_SIZE/2;
+        // 当前sort文件的个数
+        int roundFileSize = index;
+        int roundNumber = 1;
+        while (roundFileSize != 1 ) {
+            index = 0;
+            for (int i=0; i<roundFileSize;i=i+2) {
+                if (i == roundFileSize -1) {
+
+                    try {
+                        File outFile = new File(path + "\\phoneNumber_sort_round" + (roundNumber+1) + "_" + index + ".txt");
+                        FileWriter out = new FileWriter(outFile);
+
+                        int tempStart = 0;
+                        while (true) {
+                            File tempFile = new File(path + "\\phoneNumber_sort_round" + roundNumber + "_" + i + ".txt");
+                            int[] theLastPhoneNumbers = readAppointLines(tempFile, tempStart, BATCH_READ_NUMBER_MAX_SIZE);
+                            tempStart += BATCH_READ_NUMBER_MAX_SIZE;
+                            if (theLastPhoneNumbers.length == 0) {
+                                break;
+                            }
+                            for (int number : theLastPhoneNumbers) {
+                                out.write(number + "\n");
+                            }
+
+                        }
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                } else {
+                    int aStart = 0;
+                    int bStart = 0;
+                    File outFile = new File(path + "\\phoneNumber_sort_round" + (roundNumber+1) + "_" + index + ".txt");
+
+                    try {
+                        FileWriter out = new FileWriter(outFile);
+                        boolean aNeedRead = true;
+                        boolean bNeedRead = true;
+                        while (true) {
+                            int[] aNumbers;
+                            if (aNeedRead) {
+                                File aFile = new File(path + "\\phoneNumber_sort_round" + roundNumber + "_" + i + ".txt");
+                                aNumbers = readAppointLines(aFile, aStart, halfMax);
+                                aStart += halfMax;
+                            } else {
+                                aNumbers = new int[0];
+                            }
+
+                            int[] bNumbers;
+                            if (bNeedRead) {
+                                File bFile = new File(path + "\\phoneNumber_sort_round" + roundNumber + "_" + (i+1) + ".txt");
+                                bNumbers = readAppointLines(bFile, bStart, halfMax);
+                                bStart += halfMax;
+                            } else {
+                                bNumbers = new int[0];
+                            }
+
+                            if (aNumbers.length == 0 && bNumbers.length == 0) {
+                                break;
+                            }
+
+                            if (aNumbers.length == 0) {
+                                aNeedRead = false;
+                                for (int number : bNumbers) {
+                                    out.write(number + "\n");
+                                }
+                            } else if (bNumbers.length == 0) {
+                                bNeedRead = false;
+                                for (int number : aNumbers) {
+                                    out.write(number + "\n");
+                                }
+                            } else {
+                                // 两个有序数组进行归并比较
+                                int aWriteStart = 0, bWriteStart = 0;
+                                while (aWriteStart < aNumbers.length && bWriteStart < bNumbers.length) {
+                                    if (aNumbers[aWriteStart] < bNumbers[bWriteStart]) {
+                                        out.write(aNumbers[aWriteStart++] + "\n");
+                                    } else {
+                                        out.write(bNumbers[bWriteStart++] + "\n");
+                                    }
+                                }
+
+                                if (aWriteStart == aNumbers.length) {
+                                    for (; bWriteStart < bNumbers.length; bWriteStart++) {
+                                        out.write(bNumbers[bWriteStart] + "\n");
+                                    }
+                                }
+
+                                if (bWriteStart == bNumbers.length) {
+                                    for (; aWriteStart < aNumbers.length; aWriteStart++) {
+                                        out.write(aNumbers[aWriteStart] + "\n");
+                                    }
+                                }
+                            }
+                        }
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                index++;
+                System.out.println("index = " + index);
+            }
+            roundFileSize = index;
+            roundNumber++;
+            System.out.println("roundNumber = " + roundNumber);
+        }
+
+    }
+
+
+
+    /**
+     * 将号码列表写入文件中
+     * @param phoneNumbers   电话号码列表
+     * @param file           带写入的文件
+     */
+    private static void writePhoneNumbersTooFile(int[] phoneNumbers, File file) {
+        FileWriter out = null;
+        try {
+            out = new FileWriter(file);
+            for (int phoneNumber : phoneNumbers) {
+                out.write(phoneNumber + "\n");
+            }
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
 
     /**
      * 读取文件的指定行
