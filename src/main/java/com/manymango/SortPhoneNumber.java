@@ -1,7 +1,6 @@
 package com.manymango;
 
 import java.io.*;
-import java.sql.BatchUpdateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,21 +33,7 @@ public class SortPhoneNumber {
         int index = 0;
         while (start < total) {
             int[] phoneNumbers = readAppointLines(originalFile, start, BATCH_READ_NUMBER_MAX_SIZE);
-
-
-            List<Integer> list = new ArrayList<>(BATCH_READ_NUMBER_MAX_SIZE);
-            for (int number : phoneNumbers) {
-                list.add(number);
-            }
-            list.sort(Integer::compareTo);
-            phoneNumbers = new int[BATCH_READ_NUMBER_MAX_SIZE];
-            int i = 0;
-            for (int number : list) {
-                phoneNumbers[i++] = number;
-            }
-
-
-            // mergeSort(phoneNumbers, 0, phoneNumbers.length-1);
+            mergeSort(phoneNumbers, 0, phoneNumbers.length-1);
             File tempFile = new File(path + "\\phoneNumber_sort_round1_" + index + ".txt");
             writePhoneNumbersTooFile(phoneNumbers, tempFile);
             start += BATCH_READ_NUMBER_MAX_SIZE;
@@ -88,71 +73,40 @@ public class SortPhoneNumber {
                     }
 
                 } else {
-                    int aStart = 0;
-                    int bStart = 0;
                     File outFile = new File(path + "\\phoneNumber_sort_round" + (roundNumber+1) + "_" + index + ".txt");
 
                     try {
                         FileWriter out = new FileWriter(outFile);
-                        boolean aNeedRead = true;
-                        boolean bNeedRead = true;
-                        while (true) {
-                            int[] aNumbers;
-                            if (aNeedRead) {
-                                File aFile = new File(path + "\\phoneNumber_sort_round" + roundNumber + "_" + i + ".txt");
-                                aNumbers = readAppointLines(aFile, aStart, halfMax);
-                                aStart += halfMax;
+
+                        File aFile = new File(path + "\\phoneNumber_sort_round" + roundNumber + "_" + i + ".txt");
+                        LineNumberReader aReader = new LineNumberReader(new FileReader(aFile));
+                        File bFile = new File(path + "\\phoneNumber_sort_round" + roundNumber + "_" + (i+1) + ".txt");
+                        LineNumberReader bReader = new LineNumberReader(new FileReader(bFile));
+
+                        String aStr = aReader.readLine();
+                        String bStr =  bReader.readLine();
+                        while (null != aStr && null != bStr) {
+                            if (Integer.parseInt(aStr) <= Integer.parseInt(bStr)) {
+                                out.write(aStr + "\n");
+                                aStr = aReader.readLine();
                             } else {
-                                aNumbers = new int[0];
-                            }
-
-                            int[] bNumbers;
-                            if (bNeedRead) {
-                                File bFile = new File(path + "\\phoneNumber_sort_round" + roundNumber + "_" + (i+1) + ".txt");
-                                bNumbers = readAppointLines(bFile, bStart, halfMax);
-                                bStart += halfMax;
-                            } else {
-                                bNumbers = new int[0];
-                            }
-
-                            if (aNumbers.length == 0 && bNumbers.length == 0) {
-                                break;
-                            }
-
-                            if (aNumbers.length == 0) {
-                                aNeedRead = false;
-                                for (int number : bNumbers) {
-                                    out.write(number + "\n");
-                                }
-                            } else if (bNumbers.length == 0) {
-                                bNeedRead = false;
-                                for (int number : aNumbers) {
-                                    out.write(number + "\n");
-                                }
-                            } else {
-                                // 两个有序数组进行归并比较
-                                int aWriteStart = 0, bWriteStart = 0;
-                                while (aWriteStart < aNumbers.length && bWriteStart < bNumbers.length) {
-                                    if (aNumbers[aWriteStart] < bNumbers[bWriteStart]) {
-                                        out.write(aNumbers[aWriteStart++] + "\n");
-                                    } else {
-                                        out.write(bNumbers[bWriteStart++] + "\n");
-                                    }
-                                }
-
-                                if (aWriteStart == aNumbers.length) {
-                                    for (; bWriteStart < bNumbers.length; bWriteStart++) {
-                                        out.write(bNumbers[bWriteStart] + "\n");
-                                    }
-                                }
-
-                                if (bWriteStart == bNumbers.length) {
-                                    for (; aWriteStart < aNumbers.length; aWriteStart++) {
-                                        out.write(aNumbers[aWriteStart] + "\n");
-                                    }
-                                }
+                                out.write(bStr + "\n");
+                                bStr = bReader.readLine();
                             }
                         }
+
+                        if (aStr == null) {
+                            while (bStr != null) {
+                                out.write(bStr + "\n");
+                                bStr = bReader.readLine();
+                            }
+                        } else {
+                            while (aStr != null) {
+                                out.write(aStr + "\n");
+                                aStr = aReader.readLine();
+                            }
+                        }
+
                         out.close();
                     } catch (IOException e) {
                         e.printStackTrace();
