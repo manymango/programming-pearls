@@ -1,9 +1,7 @@
 package com.manymango;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -17,7 +15,7 @@ public class SortPhoneNumber {
     private static final int BATCH_READ_NUMBER_MAX_SIZE = 250000;
 
     public static void main(String[] args) {
-        fileMergeSort();
+
     }
 
 
