@@ -15,7 +15,40 @@ public class SortPhoneNumber {
     private static final int BATCH_READ_NUMBER_MAX_SIZE = 250000;
 
     public static void main(String[] args) {
+        bitVectorSort();
+    }
 
+
+    /**
+     * 利用位图法算法进行排序
+     */
+    public static void bitVectorSort() {
+        String path = getResourcesAbsolutelyPath();
+        path += "\\phoneNumberSort";
+        File originalFile = new File(path + "\\phoneNumber.txt");
+
+        int phoneNumberSize = 10000000;
+        BitVector bitVector = new BitVector(phoneNumberSize);
+        try {
+            LineNumberReader fileReader = new LineNumberReader(new FileReader(originalFile));
+            String line = fileReader.readLine();
+            do {
+                bitVector.set(Integer.parseInt(line));
+                line = fileReader.readLine();
+            } while (line != null);
+            fileReader.close();
+
+            File outFile = new File(path + "\\bit-vector-sort-result.txt");
+            FileWriter out = new FileWriter(outFile);
+            for (int i=0; i<phoneNumberSize; ++i) {
+                if (bitVector.get(i)) {
+                    out.write(i + "\n");
+                }
+            }
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
